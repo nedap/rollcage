@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  codecov: codecov/codecov@1.0.5
-
 workflows:
   test-and-deploy:
     jobs:
@@ -10,10 +7,12 @@ workflows:
       - deploy:
           requires:
             - test
+          context: JFrog
           filters:
             branches:
-              only: master
-
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-alpha\d+)?$/
 jobs:
   test:
     docker:
@@ -26,31 +25,19 @@ jobs:
       - run:
           name: Run the tests
           command: |
-            mkdir -p /tmp/circleci-test-results/lein
-            lein test-out junit /tmp/circleci-test-results/lein/results.xml
-      - run:
-          name: Calculate code coverage
-          environment:
-            CLOVERAGE_VERSION: "1.0.7-SNAPSHOT"
-          command: lein cloverage --codecov
+            lein test :unit
       - save_cache:
           key: v1-jars-{{ checksum "project.clj" }}
           paths:
             - /root/.m2
-      - codecov/upload:
-          file: target/coverage/codecov.json
-      - store_test_results:
-          path: /tmp/circleci-test-results
   deploy:
     docker:
       - image: clojure:lein-2.8.1
     steps:
       - checkout
       - run:
-          name: Configure git
-          command: |
-            git config --global user.email "sayhi@circleci.com"
-            git config --global user.name "CircleCI builder"
+          name: import GPG key
+          command: echo -e "$GPG_KEY_V2" | gpg --import
       - run:
           name: Deploy JAR
           command: lein deploy

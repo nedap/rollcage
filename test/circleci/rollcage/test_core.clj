@@ -121,7 +121,7 @@
 (deftest it-can-make-items
   (let [c (client/client "access-token" {})]
     (is (= {:access-token "access-token"}
-           (select-keys (#'client/make-rollbar c "error" (Exception.) nil nil)
+           (select-keys (#'client/make-rollbar c "error" (Exception.) nil)
                         [:access-token])))))
 
 (deftest ^:integration test-environment-is-setup
@@ -205,7 +205,7 @@
         (is (true? skipped))
         (is (and uuid (UUID/fromString uuid)))))))
 
-(deftest it-reports-ex-data
+(deftest it-reports-custom-ex-data
   (let [p (promise)
         client (assoc (client/client "access-token" {})
                       :send-fn (fn [_ _ item]
@@ -216,16 +216,41 @@
     (is (not (= result :failed)))
     (is (= {:foo 1 :bar 2} (get-in result [:data :custom])))))
 
+(deftest it-reports-request-ex-data
+  (let [p (promise)
+        client (assoc (client/client "access-token" {})
+                 :send-fn (fn [_ _ item]
+                            (deliver p item)
+                            {:err 0}))
+        _ (client/critical client (ex-info "outer" {:request {:url "/status"}}))
+        result (deref p 0 :failed)]
+    (is (not (= result :failed)))
+    (is (= {} (get-in result [:data :custom])))
+    (is (= {:url "/status"} (get-in result [:data :request])))))
+
+(deftest it-reports-request-ex-data
+  (let [p (promise)
+        client (assoc (client/client "access-token" {})
+                 :send-fn (fn [_ _ item]
+                            (deliver p item)
+                            {:err 0}))
+        _ (client/critical client (ex-info "outer" {:person {:id "42"}}))
+        result (deref p 0 :failed)]
+    (is (not (= result :failed)))
+    (is (= {} (get-in result [:data :custom])))
+    (is (= {:id "42"} (get-in result [:data :person])))))
+
 (deftest it-scrubs-ex-data
   (let [p (promise)
-        client (assoc (client/client "access-token" {:block-fields [:foo :other-foo]})
+        client (assoc (client/client "access-token" {:block-fields [:foo :other-foo :cookie]})
                       :send-fn (fn [_ _ item]
                                  (deliver p item)
                                  {:err 0}))
-        _ (client/critical client (ex-info "outer" {:foo 1} (ex-info "inner" {:bar 2})))
+        _ (client/critical client (ex-info "outer" {:foo 1 :request {:headers {:cookie "value"}}} (ex-info "inner" {:bar 2})))
         result (deref p 0 :failed)]
     (is (not (= result :failed)))
-    (is (= {:foo "*field removed*" :bar 2} (get-in result [:data :custom])))))
+    (is (= {:foo "*field removed*" :bar 2} (get-in result [:data :custom])))
+    (is (= {:cookie "*field removed*"} (get-in result [:data :request :headers])))))
 
 (deftest scrub-works
   (is (= {:first_name "*field removed*"}

@@ -43,7 +43,18 @@
                                         :timestamp s/Int
                                         :uuid UUID
                                         :custom s/Any ;; TODO verify custom
-                                        :request {:url (s/maybe String)}}}))
+                                        (s/optional-key :request) (s/maybe {(s/optional-key :url) (s/maybe String)
+                                                                            (s/optional-key :method) (s/maybe String)
+                                                                            (s/optional-key :headers) (s/maybe s/Any)
+                                                                            (s/optional-key :params) (s/maybe s/Any)
+                                                                            (s/optional-key :GET) (s/maybe s/Any)
+                                                                            (s/optional-key :query_string) (s/maybe String)
+                                                                            (s/optional-key :POST) (s/maybe s/Any)
+                                                                            (s/optional-key :body) (s/maybe String)
+                                                                            (s/optional-key :user_ip) (s/maybe String)})
+                                        (s/optional-key :person) (s/maybe {(s/optional-key :id) (s/maybe String)
+                                                                           (s/optional-key :username) (s/maybe String)
+                                                                           (s/optional-key :email) (s/maybe String)})}}))
 
 
 (defn- guess-os []
@@ -162,18 +173,16 @@
   [client :- Client
    level  :- String
    exception :- Throwable
-   url :- (s/maybe String)
    custom :- (s/maybe {s/Any s/Any})]
-  ;; TODO: Pass request parameters through to here
-  ;; TODO: add person here
   (-> client
       (dissoc :result-fn :send-fn)
       (assoc-in [:data :body :trace_chain] (build-trace exception))
       (assoc-in [:data :level]             level)
       (assoc-in [:data :timestamp]         (timestamp))
       (assoc-in [:data :uuid]              (uuid))
-      (assoc-in [:data :custom]            custom)
-      (assoc-in [:data :request :url]      url)))
+      (assoc-in [:data :custom]            (dissoc custom :request :person))
+      (assoc-in [:data :request]           (:request custom))
+      (assoc-in [:data :person]            (:person custom))))
 
 (def ^:private rollbar-to-logging
   "A look-up table to map from Rollbar severity levels to tools.logging levels"
@@ -310,10 +319,10 @@
   "Report an exception to Rollbar."
   ([^String level client ^Throwable exception]
    (notify level client exception {}))
-  ([^String level {:keys [result-fn send-fn block-fields] :as client} ^Throwable exception {:keys [url params]}]
+  ([^String level {:keys [result-fn send-fn block-fields] :as client} ^Throwable exception {:keys [params]}]
    (let [params (merge params (throwables/merged-ex-data exception))
          scrubbed (scrub params block-fields)
-         item (make-rollbar client level exception url scrubbed)
+         item (make-rollbar client level exception scrubbed)
          result (try
                   (send-fn endpoint exception item)
                   (catch Exception e
