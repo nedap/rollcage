@@ -1,25 +1,22 @@
 # Rollcage
-[![Circle CI](https://circleci.com/gh/circleci/rollcage.svg?style=svg)](https://circleci.com/gh/circleci/rollcage)
-[![cljdoc](https://cljdoc.org/badge/circleci/rollcage)](https://cljdoc.org/d/circleci/rollcage/CURRENT)
-[![codecov.io](https://codecov.io/github/circleci/rollcage/coverage.svg?branch=master)](https://codecov.io/github/circleci/rollcage?branch=master)
+[![Circle CI](https://circleci.com/gh/nedap/rollcage.svg?style=svg)](https://circleci.com/gh/nedap/rollcage)
 
 A Clojure client for [Rollbar](http://rollbar.com)
 
-
 ## Installation
 
-Rollcage is available on [Clojars](https://clojars.org/circleci/rollcage).
+Rollcage is available on [Clojars](https://clojars.org/nedap/rollcage).
 
 ### Leiningen/Boot
 
 ```clojure
-[circleci/rollcage "1.0.203"]
+[nedap/rollcage "1.0.0"]
 ```
 
 ### Clojure CLI/deps.edn
 
 ```clojure
-circleci/rollcage {:mvn/version "1.0.203"}
+nedap/rollcage {:mvn/version "1.0.0"}
 ```
 
 ## Quickstart
@@ -27,7 +24,7 @@ circleci/rollcage {:mvn/version "1.0.203"}
 You can send exceptions like this:
 
 ```Clojure
-user=> (require '[circleci.rollcage.core :as rollcage])
+user=> (require '[nedap.rollcage.core :as rollcage])
 
 user=> (def r (rollcage/client "access-token" {:environment "staging"}))
 
@@ -42,18 +39,17 @@ You can also setup handler for all UncaughtExceptions.
 Call this fn during start-up procedure to ensure all uncaught exceptions
 will be sent to Rollbar.
 
+```clj
 user=> (rollcage/setup-uncaught-exception-handler r)
-
-See the full [API docs](https://cljdoc.org/d/circleci/rollcage/CURRENT) for more
-information.
+```
 
 ## Contributing
 
-If you would like to contibute to the project, please [log an issue](https://cljdoc.org/d/circleci/rollcage/CURRENT) to discuss the feature/bug before submitting a pull request.
+If you would like to contibute to the project, please [log an issue](https://github.com/nedap/rollcage/issues) to discuss the feature/bug before submitting a pull request.
 
 ## Testing
 
-A full CI suite is [run on CircleCI](https://circleci.com/gh/circleci/rollcage).
+A full CI suite is [run on CircleCI](https://circleci.com/gh/nedap/rollcage).
 You can run the unit-test suite locally by running `lein test`. Some tests
 require access to Rollbar, with a valid access token that has permission to post
 server items. The token should be specified in the ROLLBAR_ACCESS_TOKEN
@@ -73,19 +69,13 @@ $ lein test :unit
 
 ## Releasing
 
-Releases are published [to Clojars under the CircleCI organisation](https://clojars.org/circleci/rollcage).
-You can publish new SNAPSHOT version of Rollcage using leiningen:
-
-```bash
-$ lein deploy clojars
-```
-
+Releases are published [to Clojars under the Nedap organisation](https://clojars.org/nedap/rollcage).
 You can release a new version of Rollcage by editing the version string in
-`project.clj` according to [semver](http://semver.org/) and removing the
-`-SNAPSHOT` qualifier. Then run
+`project.clj` according to [semver](http://semver.org/). Then run
 
 ```bash
-$ lein deploy clojars
+$ git tag v<version>
+$ git push --tags
 ```
 
 ## License
