@@ -4,6 +4,9 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :signing {:gpg-key "releases-staffingsolutions@nedap.com"}
+  :deploy-repositories {"clojars" {:url      "https://clojars.org/repo"
+                                   :username :env/clojars_user
+                                   :password :env/clojars_pass}}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [cheshire "5.8.1"]
                  [clj-http "2.0.0"]

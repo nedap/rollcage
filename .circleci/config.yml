@@ -3,7 +3,12 @@ version: 2.1
 workflows:
   test-and-deploy:
     jobs:
-      - test
+      - test:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-alpha\d+)?$/
       - deploy:
           requires:
             - test
@@ -40,4 +45,4 @@ jobs:
           command: echo -e "$GPG_KEY_V2" | gpg --import
       - run:
           name: Deploy JAR
-          command: lein deploy
+          command: lein deploy clojars
